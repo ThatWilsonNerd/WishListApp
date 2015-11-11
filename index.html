@@ -1,0 +1,92 @@
+<html>
+<head>
+    <title>Family Wish List</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+    <style>
+        body {
+         margin: 20px;   
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1>Family Wish List</h1>
+    </div>
+    <div class="row">
+        <div class="dropdown col-sm-3">
+          <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+            <span data-bind="text: FilterText"></span>
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="dropdownMenu1" data-bind="foreach: People">
+              <li><a href="#" data-bind="text: $data, click: $root.setFilter"></a></li>
+          </ul>
+        </div>
+        <div class=" col-sm-3">
+            <a href="#" class="btn btn-success btn-md" data-bind='click: clearFilter'>
+                <span class="glyphicon glyphicon-remove"></span> Show Everone 
+            </a>
+        </div>
+        <div class=" col-sm-3">
+            <a href="javascript:window.print()" class="btn btn-success btn-md">
+                <span class="glyphicon glyphicon-print"></span> Print 
+            </a>
+        </div>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr><th>Name</th><th>Item</th></tr>
+        </thead>
+        <tbody  data-bind="foreach: FilteredData">
+            <tr>
+                <td><span data-bind="text: gsx$name['$t']"></span></td>
+                <td><span data-bind="text: gsx$item['$t']"></span></td>
+            </tr>
+        </tbody>
+    </table>
+    <script>
+        var ListModel = function() {
+            self = this;
+            self.Filter = ko.observable('');
+            self.FilterText = ko.computed(function() { 
+                return 'Individual Lists: '+self.Filter();
+            },self);
+            self.People = ko.observableArray(['Mom','Dad','Bro','Sis']);
+            self.setFilter = function(d) {
+              self.Filter(d); 
+            };
+            self.clearFilter = function() {
+              self.Filter('');
+            };
+            self.Data = ko.observableArray([]);
+            self.FilteredData = ko.computed(function() {
+                if(self.Filter() == '') {
+                    return self.Data().sort(function(a,b){ if(a.gsx$name['$t'] < b.gsx$name['$t']) { return -1;} if(a.gsx$name['$t'] > b.gsx$name['$t']) { return 1;} return 0; });
+                }
+                else {
+                    return ko.utils.arrayFilter(self.Data(), function(item) {
+                        return (item.gsx$name['$t'] == self.Filter());
+                    });   
+                }
+            }, self);
+            self.loadData = function() {
+                $.ajax({
+                    url: "https://spreadsheets.google.com/feeds/list/176pWrAsp0ZYtAOYBWTu9tkzYgxC8ZusszKT7SUoLF84/od6/public/values?alt=json-in-script",
+                    jsonp: "callback",
+                    dataType: "jsonp",
+                    success: function( data ) {
+                        //console.log( data.feed.entry ); // server response
+                        self.Data(data.feed.entry);
+                    }
+                });   
+            };
+            self.loadData();
+        };
+        ko.applyBindings(new ListModel());
+    </script>
+</body>
+</html>
+
